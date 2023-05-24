@@ -1,6 +1,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-
+#include <opencv2/imgproc.hpp>
 /**
  * @brief Copies the lightness of one image to another.
  *
@@ -15,7 +15,7 @@
  * @param wb The weight for the blue channel.
  * @return The output image.
  */
-cv::Mat CopyLightness(cv::Mat image, cv::Mat InputImage, float wr = 1.0f, float wg = 1.0f, float wb = 1.0f) {
+cv::Mat CopyLightness(cv::Mat image, cv::Mat InputImage, float wr=0.7125, float wg=0.7154, float wb=0.0721 ) {
     // Convert the input and output images to the floating-point format `CV_32FC3`.
     image.convertTo(image, CV_32FC3);
     InputImage.convertTo(InputImage, CV_32FC3);
@@ -27,10 +27,14 @@ cv::Mat CopyLightness(cv::Mat image, cv::Mat InputImage, float wr = 1.0f, float 
     for (int x = 0; x < image.rows; x++) {
         for (int y = 0; y < image.cols; y++) {
             // Calculate the lightness of the input image at the current pixel.
-            float Lold = wr * image.at<cv::Vec3f>(x, y)[0] + wg * image.at<cv::Vec3f>(x, y)[1] + wb * image.at<cv::Vec3f>(x, y)[2];
+            float Lold = wb * image.at<cv::Vec3f>(x, y)[0]
+                    + wg * image.at<cv::Vec3f>(x, y)[1]
+                    + wr * image.at<cv::Vec3f>(x, y)[2];
 
             // Calculate the lightness of the output image at the current pixel.
-            float Lnew = wr * InputImage.at<cv::Vec3f>(x, y)[0] + wg * InputImage.at<cv::Vec3f>(x, y)[1] + wb * InputImage.at<cv::Vec3f>(x, y)[2];
+            float Lnew = wb * InputImage.at<cv::Vec3f>(x, y)[0]
+                    + wg * InputImage.at<cv::Vec3f>(x, y)[1]
+                    + wr * InputImage.at<cv::Vec3f>(x, y)[2];
 
             // Set the output image pixel to the lightness of the input image, scaled by the lightness of the output image.
             OutputImage.at<cv::Vec3f>(x, y)[0] = image.at<cv::Vec3f>(x, y)[0] * (Lnew / Lold);
@@ -123,30 +127,29 @@ float CalculateAverageDiff(cv::Mat image1, cv::Mat image2) {
  */
 cv::Mat GrayWorldAssumption(cv::Mat image) {
     // Convert the image to the floating-point format.
-    image.convertTo(image, CV_32FC3);
-
+    image.convertTo(image, CV_32FC3,1.0,0);
     // Calculate the average of each channel in the image.
-    float avgR = AverageChannelValue(image, 0) * 3;
-    float avgG = AverageChannelValue(image, 1) * 3;
-    float avgB = AverageChannelValue(image, 2) * 3;
 
+    float avgB = AverageChannelValue(image, 0);
+    float avgG = AverageChannelValue(image, 1);
+    float avgR = AverageChannelValue(image, 2);
     // Create a array to store the scale values for each channel.
-    float scaleValue[3] = {avgR, avgG, avgB};
-
+    float scaleValue[3] = {avgB * 3, avgG * 3, avgR * 3};
     // Iterate over each channel in the image.
     for (int channel = 0; channel < 3; ++channel) {
         // Iterate over each pixel in the channel.
         for (int i = 0; i < image.rows; i++) {
             for (int j = 0; j < image.cols; j++) {
                 // Divide the pixel value by the scale value for the channel.
-                image.at<cv::Vec3f>(i, j)[channel] = image.at<cv::Vec3f>(i, j)[channel] / scaleValue[channel];
+                float new_val = image.at<cv::Vec3f>(i, j)[channel] / scaleValue[channel];
+                if (new_val > 255) new_val = 255;
+                image.at<cv::Vec3f>(i, j)[channel] = new_val;
+
             }
         }
     }
-
     // Convert the image back to the unsigned integer format.
-    image.convertTo(image, CV_8UC3, 255.);
-
+    image.convertTo(image, CV_8UC3,255.);
     // Return the corrected image.
     return image;
 }
@@ -154,7 +157,8 @@ cv::Mat GrayWorldAssumption(cv::Mat image) {
 /**
  * @brief Normalizes the colors in an image.
  *
- * This function normalizes the colors in an image by dividing each pixel by the sum of its RGB values. This ensures that all pixels in the image have a value between 0 and 1.
+ * This function normalizes the colors in an image by dividing each pixel by the sum of its RGB values.
+ * This ensures that all pixels in the image have a value between 0 and 1.
  *
  * @param image The image to normalize.
  * @return The normalized image.
@@ -167,7 +171,9 @@ cv::Mat NormalizeColors(cv::Mat image) {
     for (int i = 0; i < image.rows; i++) {
         for (int j = 0; j < image.cols; j++) {
             // Calculate the sum of the RGB values at the current pixel.
-            float Sum = image.at<cv::Vec3f>(i, j)[0] + image.at<cv::Vec3f>(i, j)[1] + image.at<cv::Vec3f>(i, j)[2];
+            float Sum = image.at<cv::Vec3f>(i, j)[0]
+                    + image.at<cv::Vec3f>(i, j)[1]
+                    + image.at<cv::Vec3f>(i, j)[2];
 
             // If the sum is greater than 0, divide each RGB value by the sum.
             if (Sum > 0) {
@@ -188,7 +194,10 @@ cv::Mat NormalizeColors(cv::Mat image) {
 /**
  * @brief Performs color compression on an image.
  *
- * This function performs color compression on an image by applying the gray world assumption and then normalizing the colors. The gray world assumption states that the average of all the pixels in an image should be gray. This function calculates the average of each channel in the image and then divides each channel by its average. The colors are then normalized by dividing each pixel by the sum of its RGB values.
+ * This function performs color compression on an image by applying the gray world assumption and then normalizing the colors.
+ * The gray world assumption states that the average of all the pixels in an image should be gray.
+ * This function calculates the average of each channel in the image and then divides each channel by its average.
+ * The colors are then normalized by dividing each pixel by the sum of its RGB values.
  *
  * @param image The image to compress.
  * @param CL Whether to copy the lightness of the original image to the compressed image.
@@ -211,19 +220,38 @@ cv::Mat ComprColorImageNorm(cv::Mat image, bool CL = true, float lr = 0.1) {
 
     // If the `CL` flag is set, copy the lightness of the original image to the compressed image.
     if (CL) {
-        result = CopyLightness(result, image, 1, 1, 1);
+        result = CopyLightness(result, image);
     }
 
     // Return the compressed image.
     return result;
 }
 
-int main() {
-    // Load the input image.
-    cv::Mat image = cv::imread("/home/maxim/CLionProjects/CurseJob/test_input/fig3.jpg");
-    cv::imwrite("/home/maxim/CLionProjects/CurseJob/test_output/normalized_image.jpeg", ComprColorImageNorm(image.clone()));
-    return 0;
+cv::Mat mergeImage(cv::Mat img1, cv::Mat img2)
+{
+    // Get dimension of final image
+    int rows = (img1.rows > img2.rows) ? img1.rows : img2.rows;
+    int cols = img1.cols + img2.cols;
 
+    // Create a black image
+    cv::Mat3b res(rows, cols, cv::Vec3b(0,0,0));
+
+    // Copy images in correct position
+    img1.copyTo(res(cv::Rect(0, 0, img1.cols, img1.rows)));
+    img2.copyTo(res(cv::Rect(img1.cols, 0, img2.cols, img2.rows)));
+
+    return res;
 }
+
+// int main() {
+//     // Load the input 3RGB image.
+//     cv::Mat image = cv::imread("/home/maxim/CLionProjects/CurseJob/test_input/sint.png");
+//     cv::imwrite("/home/maxim/CLionProjects/CurseJob/test_output/normalized_image.jpeg",
+//                 mergeImage(image,
+//                            ComprColorImageNorm(image.clone())));
+//     return 0;
+
+// }
+
 
 
