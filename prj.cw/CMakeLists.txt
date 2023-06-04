@@ -58,9 +58,6 @@ include_directories(${OpenCV_INCLUDE_DIR})
 message("OpenCV_INCLUDE_DIRS: " ${OpenCV_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenCV_LIBS})
 
-# Set library shared object and API header file to install
-set(CMAKE_INSTALL_PREFIX "./out")
-
 add_subdirectory(example)
 
 if(WIN32)
