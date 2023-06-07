@@ -70,7 +70,7 @@ int main(int argc, char **argv ) {
     }
     cv::Mat diffprogression;
     if (convProgress) {
-        std::vector<cv::Mat> HMC = ccn::ComprColorImageNormDiff(image.clone());
+        std::vector<cv::Mat> HMC = ccn::ComprColorImageNormDiff(image.clone(),conValue);
         diffprogression = HMC[0];
         for (int i = 1; i < HMC.size(); i++) {
             HMC[i].convertTo(HMC[i], CV_8UC3, 128);
