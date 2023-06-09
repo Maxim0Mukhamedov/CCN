@@ -6,7 +6,6 @@ project(ccn VERSION 1.0.0 DESCRIPTION "CCN library")
 
 # For access to standard installation directory variables (CMAKE_INSTALL_xDIR).
 include(GNUInstallDirs)
-
 # Declare the library target.
 add_library(
         ${PROJECT_NAME}
@@ -50,7 +49,7 @@ if (DOXYGEN_FOUND)
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM)
     install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ccn_doc
-        DESTINATION ./bin)
+            DESTINATION ./bin)
 else ()
     message(STATUS "Couldn't find Doxygen")
 endif ()
@@ -75,8 +74,14 @@ install(DIRECTORY "${OpenCV_RUNTIME_PATH}/"
         FILES_MATCHING PATTERN "*opencv_core*"
         )
 
+install(DIRECTORY "${OpenCV_RUNTIME_PATH}/"
+        DESTINATION bin
+        FILES_MATCHING PATTERN "*libwebpdecoder*"
+        )
+
 install(
         TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+

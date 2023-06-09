@@ -3,6 +3,7 @@
 #include "opencv2/highgui.hpp"
 #include "string"
 #include "iostream"
+
 cv::Mat mergeImage(cv::Mat img1, cv::Mat img2)
 {
     int rows = (img1.rows > img2.rows) ? img1.rows : img2.rows;
@@ -32,16 +33,16 @@ int main(int argc, char **argv ) {
         } else if (static_cast<std::string>(argv[i]) == "-P") {
             convProgress = true;
         } else if (static_cast<std::string>(argv[i]) == "-h" || static_cast<std::string>(argv[i]) == "-help"){
-            std::cout << "THE PARAMS OF CNN\n";
-            std::cout << "-S : save the results to output directory" << '\n';
-            std::cout << "-D : show the results" << '\n';
-            std::cout << "-L : use CopyLightness alg" << '\n';
-            std::cout << "-P : save the converges progression" << '\n';
-            std::cout << "next params should use on this way: -[param]=[option]" << '\n';
-            std::cout << "-v : change the converges value" << '\n';
-            std::cout << "-i : change input directory" << '\n';
-            std::cout << "-s : change output directory and save results there" << '\n';
-            std::cout << "-h (-help): show params meaning" << std::endl;
+            std::cout << "ВОЗМОЖНЫЕ КЛЮЧИ CNN\n";
+            std::cout << "-S : Сохранить результат в стандартную директорию (./test_output/)" << '\n';
+            std::cout << "-D : Вывести результат в виде окна" << '\n';
+            std::cout << "-L : Использовать CopyLightness" << '\n';
+            std::cout << "-P : Рассчитать прогресс сходимости" << '\n';
+            std::cout << "Следующие ключи нужно использовать по образцу: -[param]=[option]" << '\n';
+            std::cout << "-v : Изменить значение разницы между изображениями, достаточное для остановки алгоритма" << '\n';
+            std::cout << "-i : Указать путь к изображению" << '\n';
+            std::cout << "-s : Указать путь для сохранения результатов" << '\n';
+            std::cout << "-h (-help): Показать возможные ключи" << std::endl;
             return 0;
         } else if (static_cast<std::string>(argv[i]).size() > 3) {
             std::string param = static_cast<std::string>(argv[i]);
@@ -80,8 +81,9 @@ int main(int argc, char **argv ) {
             cv::imwrite(saveDirectory + "/diff.jpg",
                         mergeImage(image,
                                    diffprogression));
+            std::cout << HMC.size();
         }
-        std::cout << HMC.size();
+        std::cout << "Количество итераций до схождения: " << HMC.size() << std::endl;
     }
     cv::Mat result = ccn::ComprColorImageNorm(image.clone(), conValue, copyLightness);
     if (save) {
